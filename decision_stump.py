@@ -85,12 +85,72 @@ class DecisionStumpErrorRate:
         pass
 
     def fit(self, X, y):
-        """ YOUR CODE HERE """
-        raise NotImplementedError
+        N, D = X.shape
+
+        # Get an array with the number of 0's, number of 1's, etc.
+        count = np.bincount(y)    
+        
+        # Get the index of the largest value in count.  
+        # Thus, y_mode is the mode (most popular value) of y
+        y_mode = np.argmax(count) 
+
+        self.splitSat = y_mode
+        self.splitNot = None
+        self.splitVariable = None
+        self.splitValue = None
+
+        # If all the labels are the same, no need to split further
+        if np.unique(y).size <= 1:
+            return
+
+        minError = np.sum(y != y_mode)
+
+        # Loop over features looking for the best split
+        X = np.round(X)
+
+        for d in range(D):
+            for n in range(N):
+                # Choose value to equate to
+                value = X[n, d]
+
+                # Find most likely class for each split
+                y_sat = utils.mode(y[X[:,d] > value])
+                y_not = utils.mode(y[X[:,d] <= value])
+
+                # Make predictions
+                y_pred = y_sat * np.ones(N)
+                y_pred[X[:, d] <= value] = y_not
+
+                # Compute error
+                errors = np.sum(y_pred != y)
+
+                # Compare to minimum error so far
+                if errors < minError:
+                    # This is the lowest error, store this value
+                    minError = errors
+                    self.splitVariable = d
+                    self.splitValue = value
+                    self.splitSat = y_sat
+                    self.splitNot = y_not
 
     def predict(self, X):
-        """ YOUR CODE HERE """
-        raise NotImplementedError
+
+        M, D = X.shape
+        # X = np.round(X)
+
+        if self.splitVariable is None:
+            return self.splitSat * np.ones(M)
+
+        yhat = np.zeros(M)
+
+        for m in range(M):
+            if X[m, self.splitVariable] > self.splitValue:
+                yhat[m] = self.splitSat
+            else:
+                yhat[m] = self.splitNot
+
+        return yhat
+
 
 
 
@@ -111,6 +171,61 @@ def entropy(p):
 # to have this class inherit from DecisionStumpErrorRate.
 # Which methods (init, fit, predict) do you need to overwrite?
 class DecisionStumpInfoGain(DecisionStumpErrorRate):
-    pass # DELETE THIS, IMPLEMENT NEW METHOD(S)
+    
+    # def __init__(self):
+    #    pass
 
+    def fit(self, X, y):
+        N, D = X.shape
 
+        # Get an array with the number of 0's, number of 1's, etc.
+        count = np.bincount(y)    
+        
+        # Get the index of the largest value in count.  
+        # Thus, y_mode is the mode (most popular value) of y
+        y_mode = np.argmax(count) 
+        
+        proba = count/np.sum(count)
+        totalETP = entropy(proba)
+        
+        infoMaxGain = 0
+        
+        self.splitSat = y_mode
+        self.splitNot = None
+        self.splitVariable = None
+        self.splitValue = None
+
+        # If all the labels are the same, no need to split further
+        if np.unique(y).size <= 1:
+            return
+
+        # minError = np.sum(y != y_mode)
+
+        # Loop over features looking for the best split
+        # X = np.round(X)
+
+        for d in range(D):
+            feature = np.unique(X[:,d])
+            for value in feature[:-1]:
+                # Choose value to equate to
+                ySat = y[X[:,d] > value]
+                yNot = y[X[;,d] <= value]
+                
+                countSat = np.bincount(ySat,len(count))
+                countNot = np.bincount(yNot,len(count))
+
+                eSat = entropy(countSat/np.sum(countSat))
+                eNot = entropy(countNot/np.sum(countNot))
+                
+                pSat = np.sum(X[:,d] > value)/N
+                pNot = 1 - pSat
+               
+                infoGain = totalETP - (pSat*eSat + pNot*eNot)
+               
+                if infoGain > infoMaxGain:
+                    infoMaxGain = infoGain
+                    self.splitVariable = d
+                    self.splitValue = value
+                    self.splitSat = np.argmax(countSat)
+                    self.splitNot = np.argmax(countNot)
+        
