@@ -106,7 +106,7 @@ class DecisionStumpErrorRate:
         minError = np.sum(y != y_mode)
 
         # Loop over features looking for the best split
-        X = np.round(X)
+        # X = np.round(X)
 
         for d in range(D):
             for n in range(N):
@@ -209,7 +209,7 @@ class DecisionStumpInfoGain(DecisionStumpErrorRate):
             for value in feature[:-1]:
                 # Choose value to equate to
                 ySat = y[X[:,d] > value]
-                yNot = y[X[;,d] <= value]
+                yNot = y[X[:,d] <= value]
                 
                 countSat = np.bincount(ySat,minlength = len(count))
                 countNot = np.bincount(yNot,minlength = len(count))
