@@ -211,8 +211,8 @@ class DecisionStumpInfoGain(DecisionStumpErrorRate):
                 ySat = y[X[:,d] > value]
                 yNot = y[X[;,d] <= value]
                 
-                countSat = np.bincount(ySat,len(count))
-                countNot = np.bincount(yNot,len(count))
+                countSat = np.bincount(ySat,minlength = len(count))
+                countNot = np.bincount(yNot,minlength = len(count))
 
                 eSat = entropy(countSat/np.sum(countSat))
                 eNot = entropy(countNot/np.sum(countNot))
